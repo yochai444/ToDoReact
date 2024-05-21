@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -8,91 +8,138 @@ import {
   Button,
   MenuItem,
 } from "@mui/material";
+import { useForm, Controller } from "react-hook-form";
 
 const subjects = ["Work", "Personal", "Shopping", "Others"];
 
-export default function TodoDialog({ open, onClose, onSave, editingTodo }) {
-  // creat a states of the part value of the DOTO
-  const [name, setName] = useState("");
-  const [subject, setSubject] = useState("");
-  const [priority, setPriority] = useState(1);
-  const [date, setDate] = useState("");
+const TodoDialog = ({ open, onClose, onSave, editingTodo }) => {
+  const { control, handleSubmit, reset, setValue } = useForm({
+    defaultValues: {
+      name: "",
+      subject: "",
+      priority: 1,
+      date: "",
+    },
+  });
 
   useEffect(() => {
     if (editingTodo) {
-      setName(editingTodo.name);
-      setSubject(editingTodo.subject);
-      setPriority(editingTodo.priority);
-      setDate(editingTodo.date);
+      setValue("name", editingTodo.name);
+      setValue("subject", editingTodo.subject);
+      setValue("priority", editingTodo.priority);
+      setValue("date", editingTodo.date);
     }
-  }, [editingTodo]);
+  }, [editingTodo, setValue]);
 
-  const handleSave = () => {
+  const onSubmit = (data) => {
     onSave({
-      id: editingTodo?.id,
-      name,
-      subject,
-      priority,
-      date,
+      ...data,
+      id: editingTodo?.id || Date.now(),
       completed: editingTodo?.completed || false,
     });
-    setName("");
-    setSubject("");
-    setPriority(1);
-    setDate("");
+    reset();
     onClose();
   };
 
+  const handleClose = () => {
+    reset();
+    onClose();
+  };
+
+  const handleKeyPress = (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      handleSubmit(onSubmit)();
+    }
+  };
+
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog open={open} onClose={handleClose}>
       <DialogTitle>{editingTodo ? "Edit Todo" : "Add Todo"}</DialogTitle>
       <DialogContent>
-        <TextField
-          label="Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          fullWidth
-          margin="normal"
-        />
-        <TextField
-          select
-          label="Subject"
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          fullWidth
-          margin="normal"
-        >
-          {subjects.map((option) => (
-            <MenuItem key={option} value={option}>
-              {option}
-            </MenuItem>
-          ))}
-        </TextField>
-        <TextField
-          type="number"
-          label="Priority"
-          value={priority}
-          onChange={(e) => setPriority(parseInt(e.target.value))}
-          fullWidth
-          margin="normal"
-          inputProps={{ min: 1, max: 10 }}
-        />
-        <TextField
-          type="date"
-          label="Date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          fullWidth
-          margin="normal"
-          InputLabelProps={{ shrink: true }}
-        />
+        <form onSubmit={handleSubmit(onSubmit)} onKeyDown={handleKeyPress}>
+          <Controller
+            name="name"
+            control={control}
+            rules={{ required: "Name is required" }}
+            render={({ field, fieldState }) => (
+              <TextField
+                {...field}
+                label="Name"
+                fullWidth
+                margin="normal"
+                error={!!fieldState.error}
+                helperText={fieldState.error?.message}
+              />
+            )}
+          />
+          <Controller
+            name="subject"
+            control={control}
+            rules={{ required: "Subject is required" }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                select
+                label="Subject"
+                fullWidth
+                margin="normal"
+              >
+                {subjects.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </TextField>
+            )}
+          />
+          <Controller
+            name="priority"
+            control={control}
+            rules={{
+              required: "Priority is required",
+              min: { value: 1, message: "Priority must be at least 1" },
+              max: { value: 10, message: "Priority must be at most 10" },
+            }}
+            render={({ field, fieldState }) => (
+              <TextField
+                {...field}
+                type="number"
+                label="Priority"
+                fullWidth
+                margin="normal"
+                error={!!fieldState.error}
+                helperText={fieldState.error?.message}
+                inputProps={{ min: 1, max: 10 }}
+              />
+            )}
+          />
+          <Controller
+            name="date"
+            control={control}
+            rules={{ required: "Date is required" }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                type="date"
+                label="Date"
+                fullWidth
+                margin="normal"
+                InputLabelProps={{ shrink: true }}
+              />
+            )}
+          />
+        </form>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSave} color="primary">
+        <Button onClick={handleClose}>Cancel</Button>
+        <Button onClick={handleSubmit(onSubmit)} color="primary">
           Save
         </Button>
       </DialogActions>
     </Dialog>
   );
-}
+};
+
+export default TodoDialog;
+``;
