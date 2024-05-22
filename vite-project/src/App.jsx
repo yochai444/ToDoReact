@@ -1,42 +1,54 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Container, TextField, IconButton, Box } from "@mui/material";
 import { Add as AddIcon, Search as SearchIcon } from "@mui/icons-material";
+import { useAtom } from "jotai";
+import { todosAtom, editingTodoAtom, dialogOpenAtom } from "./atoms";
 import TodoDialog from "./TodoDialog";
 import TodoCard from "./TodoCard";
 
-export default function App() {
-  // creat a TODO arr state
-  const [todos, setTodos] = useState([]);
-  //crea a input search filter state
+const App = () => {
+  const [todos, setTodos] = useAtom(todosAtom);
   const [searchTerm, setSearchTerm] = useState("");
-  //creat a statuse dialog state
-  const [dialogOpen, setDialogOpen] = useState(false);
-  // creat a pointer of TODO editing
-  const [editingTodo, setEditingTodo] = useState(null);
+  const [filteredTodos, setFilteredTodos] = useState(todos);
+  const [dialogOpen, setDialogOpen] = useAtom(dialogOpenAtom);
+  const [, setEditingTodo] = useAtom(editingTodoAtom);
 
-  //push the the todo task to todos arr. cheack the status of editing to mark the editing todo
+  // Debounce logic
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setFilteredTodos(
+        todos.filter((todo) =>
+          todo.name.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      );
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm, todos]);
+
   const handleAddTodo = (todo) => {
-    if (editingTodo) {
-      setTodos(todos.map((t) => (t.id === editingTodo.id ? todo : t)));
-      setEditingTodo(null);
-    } else {
-      setTodos([...todos, { ...todo, id: Date.now() }]);
-    }
+    setTodos((prevTodos) => {
+      if (todo.id) {
+        return prevTodos.map((t) => (t.id === todo.id ? todo : t));
+      }
+      return [...prevTodos, { ...todo, id: Date.now() }];
+    });
   };
 
   const handleDeleteTodo = (id) => {
-    setTodos(todos.filter((todo) => todo.id !== id));
+    setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
   };
 
-  // change  the status of editing and start to edit
   const handleEditTodo = (todo) => {
     setEditingTodo(todo);
     setDialogOpen(true);
   };
 
   const handleToggleComplete = (id) => {
-    setTodos(
-      todos.map((todo) =>
+    setTodos((prevTodos) =>
+      prevTodos.map((todo) =>
         todo.id === id ? { ...todo, completed: !todo.completed } : todo
       )
     );
@@ -45,10 +57,6 @@ export default function App() {
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
-  // filter search on the todos arrr if there is, oter  its the same
-  const filteredTodos = todos.filter((todo) =>
-    todo.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   return (
     <Container>
@@ -67,7 +75,6 @@ export default function App() {
             ),
           }}
         />
-
         <IconButton color="primary" onClick={() => setDialogOpen(true)}>
           <AddIcon />
         </IconButton>
@@ -81,12 +88,9 @@ export default function App() {
           onToggleComplete={handleToggleComplete}
         />
       ))}
-      <TodoDialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        onSave={handleAddTodo}
-        editingTodo={editingTodo}
-      />
+      <TodoDialog onSave={handleAddTodo} />
     </Container>
   );
-}
+};
+
+export default App;

@@ -5,7 +5,7 @@ import {
   Edit as EditIcon,
   Done as DoneIcon,
 } from "@mui/icons-material";
-const x = 5;
+
 export default function TodoCard({ todo, onDelete, onEdit, onToggleComplete }) {
   return (
     <Card variant="outlined" style={{ marginBottom: 16 }}>

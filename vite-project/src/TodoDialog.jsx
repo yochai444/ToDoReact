@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
 import {
   Dialog,
   DialogTitle,
@@ -8,28 +9,28 @@ import {
   Button,
   MenuItem,
 } from "@mui/material";
-import { useForm, Controller } from "react-hook-form";
+import { useAtom } from "jotai";
+import { editingTodoAtom, dialogOpenAtom } from "./atoms";
 
 const subjects = ["Work", "Personal", "Shopping", "Others"];
 
-const TodoDialog = ({ open, onClose, onSave, editingTodo }) => {
-  const { control, handleSubmit, reset, setValue } = useForm({
-    defaultValues: {
-      name: "",
-      subject: "",
-      priority: 1,
-      date: "",
-    },
-  });
+const TodoDialog = ({ onSave }) => {
+  const [editingTodo, setEditingTodo] = useAtom(editingTodoAtom);
+  const [dialogOpen, setDialogOpen] = useAtom(dialogOpenAtom);
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm();
 
   useEffect(() => {
     if (editingTodo) {
-      setValue("name", editingTodo.name);
-      setValue("subject", editingTodo.subject);
-      setValue("priority", editingTodo.priority);
-      setValue("date", editingTodo.date);
+      reset(editingTodo);
+    } else {
+      reset({ name: "", subject: "", priority: 1, date: "" });
     }
-  }, [editingTodo, setValue]);
+  }, [editingTodo, reset]);
 
   const onSubmit = (data) => {
     onSave({
@@ -37,45 +38,35 @@ const TodoDialog = ({ open, onClose, onSave, editingTodo }) => {
       id: editingTodo?.id || Date.now(),
       completed: editingTodo?.completed || false,
     });
-    reset();
-    onClose();
-  };
-
-  const handleClose = () => {
-    reset();
-    onClose();
-  };
-
-  const handleKeyPress = (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      handleSubmit(onSubmit)();
-    }
+    setDialogOpen(false);
+    setEditingTodo(null);
   };
 
   return (
-    <Dialog open={open} onClose={handleClose}>
+    <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
       <DialogTitle>{editingTodo ? "Edit Todo" : "Add Todo"}</DialogTitle>
       <DialogContent>
-        <form onSubmit={handleSubmit(onSubmit)} onKeyDown={handleKeyPress}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <Controller
             name="name"
             control={control}
+            defaultValue=""
             rules={{ required: "Name is required" }}
-            render={({ field, fieldState }) => (
+            render={({ field }) => (
               <TextField
                 {...field}
                 label="Name"
                 fullWidth
                 margin="normal"
-                error={!!fieldState.error}
-                helperText={fieldState.error?.message}
+                error={!!errors.name}
+                helperText={errors.name ? errors.name.message : ""}
               />
             )}
           />
           <Controller
             name="subject"
             control={control}
+            defaultValue=""
             rules={{ required: "Subject is required" }}
             render={({ field }) => (
               <TextField
@@ -84,6 +75,8 @@ const TodoDialog = ({ open, onClose, onSave, editingTodo }) => {
                 label="Subject"
                 fullWidth
                 margin="normal"
+                error={!!errors.subject}
+                helperText={errors.subject ? errors.subject.message : ""}
               >
                 {subjects.map((option) => (
                   <MenuItem key={option} value={option}>
@@ -96,27 +89,29 @@ const TodoDialog = ({ open, onClose, onSave, editingTodo }) => {
           <Controller
             name="priority"
             control={control}
+            defaultValue={1}
             rules={{
               required: "Priority is required",
-              min: { value: 1, message: "Priority must be at least 1" },
-              max: { value: 10, message: "Priority must be at most 10" },
+              min: { value: 1, message: "Minimum value is 1" },
+              max: { value: 10, message: "Maximum value is 10" },
             }}
-            render={({ field, fieldState }) => (
+            render={({ field }) => (
               <TextField
                 {...field}
                 type="number"
                 label="Priority"
                 fullWidth
                 margin="normal"
-                error={!!fieldState.error}
-                helperText={fieldState.error?.message}
                 inputProps={{ min: 1, max: 10 }}
+                error={!!errors.priority}
+                helperText={errors.priority ? errors.priority.message : ""}
               />
             )}
           />
           <Controller
             name="date"
             control={control}
+            defaultValue=""
             rules={{ required: "Date is required" }}
             render={({ field }) => (
               <TextField
@@ -126,20 +121,21 @@ const TodoDialog = ({ open, onClose, onSave, editingTodo }) => {
                 fullWidth
                 margin="normal"
                 InputLabelProps={{ shrink: true }}
+                error={!!errors.date}
+                helperText={errors.date ? errors.date.message : ""}
               />
             )}
           />
+          <DialogActions>
+            <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button type="submit" color="primary">
+              Save
+            </Button>
+          </DialogActions>
         </form>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose}>Cancel</Button>
-        <Button onClick={handleSubmit(onSubmit)} color="primary">
-          Save
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 };
 
 export default TodoDialog;
-``;
