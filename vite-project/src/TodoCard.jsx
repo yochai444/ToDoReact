@@ -6,7 +6,7 @@ import {
   Done as DoneIcon,
 } from "@mui/icons-material";
 
-export default function TodoCard({ todo, onDelete, onEdit, onToggleComplete }) {
+const TodoCard = ({ todo, onDelete, onEdit, onToggleComplete }) => {
   return (
     <Card variant="outlined" style={{ marginBottom: 16 }}>
       <CardContent>
@@ -44,4 +44,6 @@ export default function TodoCard({ todo, onDelete, onEdit, onToggleComplete }) {
       </CardContent>
     </Card>
   );
-}
+};
+
+export default TodoCard;

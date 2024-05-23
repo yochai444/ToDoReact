@@ -9,46 +9,32 @@ import TodoCard from "./TodoCard";
 const App = () => {
   const [todos, setTodos] = useAtom(todosAtom);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredTodos, setFilteredTodos] = useState(todos);
+
   const [dialogOpen, setDialogOpen] = useAtom(dialogOpenAtom);
-  const [, setEditingTodo] = useAtom(editingTodoAtom);
-
-  // Debounce logic
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setFilteredTodos(
-        todos.filter((todo) =>
-          todo.name.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      );
-    }, 500);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [searchTerm, todos]);
+  const [editingTodo, setEditingTodo] = useAtom(editingTodoAtom);
 
   const handleAddTodo = (todo) => {
-    setTodos((prevTodos) => {
-      if (todo.id) {
-        return prevTodos.map((t) => (t.id === todo.id ? todo : t));
-      }
-      return [...prevTodos, { ...todo, id: Date.now() }];
-    });
+    if (editingTodo) {
+      setTodos(todos.map((t) => (t.id === editingTodo.id ? todo : t)));
+      setEditingTodo(null);
+    } else {
+      setTodos([...todos, { ...todo, id: Date.now() }]);
+    }
   };
 
   const handleDeleteTodo = (id) => {
-    setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
+    setTodos(todos.filter((todo) => todo.id !== id));
   };
 
+  // change  the status of editing and start to edit
   const handleEditTodo = (todo) => {
     setEditingTodo(todo);
     setDialogOpen(true);
   };
 
   const handleToggleComplete = (id) => {
-    setTodos((prevTodos) =>
-      prevTodos.map((todo) =>
+    setTodos(
+      todos.map((todo) =>
         todo.id === id ? { ...todo, completed: !todo.completed } : todo
       )
     );
@@ -57,6 +43,10 @@ const App = () => {
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
+  // filter search on the todos arrr if there is, oter  its the same
+  const filteredTodos = todos.filter((todo) =>
+    todo.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <Container>

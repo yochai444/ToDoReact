@@ -22,7 +22,14 @@ const TodoDialog = ({ onSave }) => {
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm();
+  } = useForm({
+    defaultValues: {
+      name: "",
+      subject: "",
+      priority: 1,
+      date: "",
+    },
+  });
 
   useEffect(() => {
     if (editingTodo) {
@@ -40,6 +47,11 @@ const TodoDialog = ({ onSave }) => {
     });
     setDialogOpen(false);
     setEditingTodo(null);
+  };
+
+  const handleClose = () => {
+    reset();
+    setDialogOpen(false);
   };
 
   return (
@@ -127,8 +139,8 @@ const TodoDialog = ({ onSave }) => {
             )}
           />
           <DialogActions>
-            <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button type="submit" color="primary">
+            <Button onClick={handleClose}>Cancel</Button>
+            <Button onClick={handleSubmit(onSubmit)} color="primary">
               Save
             </Button>
           </DialogActions>
