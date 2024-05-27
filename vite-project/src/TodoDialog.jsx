@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
 import {
   Dialog,
   DialogTitle,
@@ -8,91 +9,145 @@ import {
   Button,
   MenuItem,
 } from "@mui/material";
+import { useAtom } from "jotai";
+import { editingTodoAtom, dialogOpenAtom } from "./atoms";
 
 const subjects = ["Work", "Personal", "Shopping", "Others"];
 
-export default function TodoDialog({ open, onClose, onSave, editingTodo }) {
-  // creat a states of the part value of the DOTO
-  const [name, setName] = useState("");
-  const [subject, setSubject] = useState("");
-  const [priority, setPriority] = useState(1);
-  const [date, setDate] = useState("");
+const TodoDialog = ({ onSave }) => {
+  const [editingTodo, setEditingTodo] = useAtom(editingTodoAtom);
+  const [dialogOpen, setDialogOpen] = useAtom(dialogOpenAtom);
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      name: "",
+      subject: "",
+      priority: 1,
+      date: "",
+    },
+  });
 
   useEffect(() => {
     if (editingTodo) {
-      setName(editingTodo.name);
-      setSubject(editingTodo.subject);
-      setPriority(editingTodo.priority);
-      setDate(editingTodo.date);
+      reset(editingTodo);
+    } else {
+      reset({ name: "", subject: "", priority: 1, date: "" });
     }
-  }, [editingTodo]);
+  }, [editingTodo, reset]);
 
-  const handleSave = () => {
+  const onSubmit = (data) => {
     onSave({
-      id: editingTodo?.id,
-      name,
-      subject,
-      priority,
-      date,
+      ...data,
+      id: editingTodo?.id || Date.now(),
       completed: editingTodo?.completed || false,
     });
-    setName("");
-    setSubject("");
-    setPriority(1);
-    setDate("");
-    onClose();
+    setDialogOpen(false);
+    setEditingTodo(null);
+  };
+
+  const handleClose = () => {
+    reset();
+    setDialogOpen(false);
   };
 
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
       <DialogTitle>{editingTodo ? "Edit Todo" : "Add Todo"}</DialogTitle>
       <DialogContent>
-        <TextField
-          label="Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          fullWidth
-          margin="normal"
-        />
-        <TextField
-          select
-          label="Subject"
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          fullWidth
-          margin="normal"
-        >
-          {subjects.map((option) => (
-            <MenuItem key={option} value={option}>
-              {option}
-            </MenuItem>
-          ))}
-        </TextField>
-        <TextField
-          type="number"
-          label="Priority"
-          value={priority}
-          onChange={(e) => setPriority(parseInt(e.target.value))}
-          fullWidth
-          margin="normal"
-          inputProps={{ min: 1, max: 10 }}
-        />
-        <TextField
-          type="date"
-          label="Date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          fullWidth
-          margin="normal"
-          InputLabelProps={{ shrink: true }}
-        />
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <Controller
+            name="name"
+            control={control}
+            defaultValue=""
+            rules={{ required: "Name is required" }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Name"
+                fullWidth
+                margin="normal"
+                error={!!errors.name}
+                helperText={errors.name ? errors.name.message : ""}
+              />
+            )}
+          />
+          <Controller
+            name="subject"
+            control={control}
+            defaultValue=""
+            rules={{ required: "Subject is required" }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                select
+                label="Subject"
+                fullWidth
+                margin="normal"
+                error={!!errors.subject}
+                helperText={errors.subject ? errors.subject.message : ""}
+              >
+                {subjects.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </TextField>
+            )}
+          />
+          <Controller
+            name="priority"
+            control={control}
+            defaultValue={1}
+            rules={{
+              required: "Priority is required",
+              min: { value: 1, message: "Minimum value is 1" },
+              max: { value: 10, message: "Maximum value is 10" },
+            }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                type="number"
+                label="Priority"
+                fullWidth
+                margin="normal"
+                inputProps={{ min: 1, max: 10 }}
+                error={!!errors.priority}
+                helperText={errors.priority ? errors.priority.message : ""}
+              />
+            )}
+          />
+          <Controller
+            name="date"
+            control={control}
+            defaultValue=""
+            rules={{ required: "Date is required" }}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                type="date"
+                label="Date"
+                fullWidth
+                margin="normal"
+                InputLabelProps={{ shrink: true }}
+                error={!!errors.date}
+                helperText={errors.date ? errors.date.message : ""}
+              />
+            )}
+          />
+          <DialogActions>
+            <Button onClick={handleClose}>Cancel</Button>
+            <Button onClick={handleSubmit(onSubmit)} color="primary">
+              Save
+            </Button>
+          </DialogActions>
+        </form>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSave} color="primary">
-          Save
-        </Button>
-      </DialogActions>
     </Dialog>
   );
-}
+};
+
+export default TodoDialog;

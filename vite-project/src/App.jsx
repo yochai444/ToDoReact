@@ -1,20 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Container, TextField, IconButton, Box } from "@mui/material";
 import { Add as AddIcon, Search as SearchIcon } from "@mui/icons-material";
+import { useAtom } from "jotai";
+import { todosAtom, editingTodoAtom, dialogOpenAtom } from "./atoms";
 import TodoDialog from "./TodoDialog";
 import TodoCard from "./TodoCard";
 
-export default function App() {
-  // creat a TODO arr state
-  const [todos, setTodos] = useState([]);
-  //crea a input search filter state
+const App = () => {
+  const [todos, setTodos] = useAtom(todosAtom);
   const [searchTerm, setSearchTerm] = useState("");
-  //creat a statuse dialog state
-  const [dialogOpen, setDialogOpen] = useState(false);
-  // creat a pointer of TODO editing
-  const [editingTodo, setEditingTodo] = useState(null);
 
-  //push the the todo task to todos arr. cheack the status of editing to mark the editing todo
+  const [dialogOpen, setDialogOpen] = useAtom(dialogOpenAtom);
+  const [editingTodo, setEditingTodo] = useAtom(editingTodoAtom);
+
   const handleAddTodo = (todo) => {
     if (editingTodo) {
       setTodos(todos.map((t) => (t.id === editingTodo.id ? todo : t)));
@@ -67,7 +65,6 @@ export default function App() {
             ),
           }}
         />
-
         <IconButton color="primary" onClick={() => setDialogOpen(true)}>
           <AddIcon />
         </IconButton>
@@ -81,12 +78,9 @@ export default function App() {
           onToggleComplete={handleToggleComplete}
         />
       ))}
-      <TodoDialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        onSave={handleAddTodo}
-        editingTodo={editingTodo}
-      />
+      <TodoDialog onSave={handleAddTodo} />
     </Container>
   );
-}
+};
+
+export default App;
