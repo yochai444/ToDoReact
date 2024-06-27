@@ -1,11 +1,15 @@
-import { todoSchema } from "../validations/validationTodos.js";
+import {
+  todoSchema,
+  updateTodoSchema,
+} from "../validations/validationTodos.js";
+import { validateMiddleware } from "../validations/postValidation.js";
 import { getDb } from "../db.js";
 import express from "express";
 import { ObjectId } from "mongodb";
 
 export const router = express.Router();
 
-router.post("/", async (req, res) => {
+router.post("/", validateMiddleware(todoSchema), async (req, res) => {
   const todo = {
     name: req.body.name,
     subject: req.body.subject,
@@ -27,7 +31,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", validateMiddleware(updateTodoSchema), async (req, res) => {
   const id = req.params.id;
   const updatedTodo = {
     $set: {

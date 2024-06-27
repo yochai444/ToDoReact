@@ -1,4 +1,5 @@
 import { router } from "./routes/todos.js";
+import { todoSchema } from "./validations/validationTodos.js";
 import express from "express";
 import cors from "cors";
 const app = express();
@@ -6,6 +7,7 @@ const app = express();
 export const createServer = () => {
   app.use(cors());
   app.use(express.json());
+
   app.use("/api/todos", router);
 
   app.use((err, req, res, next) => {

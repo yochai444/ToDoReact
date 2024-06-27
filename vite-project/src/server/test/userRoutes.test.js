@@ -8,7 +8,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   const db = getDb();
-  //await db.dropDatabase();
+  
   await db.client.close();
 });
 

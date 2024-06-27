@@ -23,3 +23,8 @@ export async function connectDb() {
 export function getDb() {
   return db;
 }
+
+export async function connectCollection (){
+
+  
+}

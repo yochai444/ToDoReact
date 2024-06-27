@@ -19,7 +19,12 @@ const TodoDialog = () => {
   const [todos, setTodos] = useAtom(todosAtom);
   const [open, setOpen] = useAtom(dialogOpenAtom);
   const [currentTodo, setCurrentTodo] = useAtom(CurrentTodo);
-  const { control, handleSubmit, reset } = useForm({
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
     defaultValues: currentTodo || {
       name: "",
       subject: "",
@@ -74,6 +79,7 @@ const TodoDialog = () => {
           <Controller
             name="name"
             control={control}
+            rules={{ required: "Name is required" }}
             render={({ field }) => (
               <TextField
                 {...field}
@@ -81,20 +87,25 @@ const TodoDialog = () => {
                 variant="outlined"
                 fullWidth
                 margin="normal"
+                error={!!errors.name}
+                helperText={errors.name ? errors.name.message : ""}
               />
             )}
           />
           <Controller
             name="subject"
             control={control}
+            rules={{ required: "Subject is required" }}
             render={({ field }) => (
               <TextField
+                select
                 {...field}
                 label="Subject"
                 variant="outlined"
                 fullWidth
                 margin="normal"
-                select
+                error={!!errors.subject}
+                helperText={errors.subject ? errors.subject.message : ""}
               >
                 {subjects.map((subject) => (
                   <MenuItem key={subject} value={subject}>
@@ -107,6 +118,11 @@ const TodoDialog = () => {
           <Controller
             name="priority"
             control={control}
+            rules={{
+              required: "Priority is required",
+              min: { value: 1, message: "Minimum value is 1" },
+              max: { value: 10, message: "Maximum value is 10" },
+            }}
             render={({ field }) => (
               <TextField
                 {...field}
@@ -122,6 +138,7 @@ const TodoDialog = () => {
           <Controller
             name="date"
             control={control}
+            rules={{ required: "Date is required" }}
             render={({ field }) => (
               <TextField
                 {...field}
@@ -130,6 +147,8 @@ const TodoDialog = () => {
                 variant="outlined"
                 fullWidth
                 margin="normal"
+                error={!!errors.subject}
+                helperText={errors.subject ? errors.subject.message : ""}
                 InputLabelProps={{ shrink: true }}
               />
             )}
