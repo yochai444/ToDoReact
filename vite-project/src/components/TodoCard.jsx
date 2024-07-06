@@ -1,5 +1,5 @@
 import React from "react";
-import { useAtom, useSetAtom, atom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { todosAtom, dialogOpenAtom, CurrentTodo } from "./atoms";
 import { Card, CardContent, Typography, IconButton } from "@mui/material";
 import {
@@ -7,20 +7,17 @@ import {
   Edit as EditIcon,
   Done as DoneIcon,
 } from "@mui/icons-material";
-import axios from "axios";
+import { useDeleteTodoMutation, useUpdateTodoMutation } from "../hooks/todos";
 
 const TodoCard = ({ todo }) => {
-  const [todos, setTodos] = useAtom(todosAtom);
-  const [open, setOpen] = useAtom(dialogOpenAtom);
-  const [currentTodo, setCurrentTodo] = useAtom(CurrentTodo);
+  const setOpen = useSetAtom(dialogOpenAtom);
+  const setCurrentTodo = useSetAtom(CurrentTodo);
+
+  const { mutate: updatedTodoMutation } = useUpdateTodoMutation();
+  const { mutate: deleteTodoMutation } = useDeleteTodoMutation();
 
   const handleDelete = async () => {
-    try {
-      await axios.delete(`http://localhost:8000/api/todos/${todo._id}`);
-      setTodos((todos) => todos.filter((t) => t._id !== todo._id));
-    } catch (error) {
-      console.error("Error deleting todo:", error);
-    }
+    return deleteTodoMutation(todo._id);
   };
 
   const handleEdit = () => {
@@ -29,18 +26,8 @@ const TodoCard = ({ todo }) => {
   };
 
   const handleToggleComplete = async () => {
-    try {
-      const updatedTodo = { ...todo, completed: !todo.completed };
-      const response = await axios.put(
-        `http://localhost:8000/api/todos/${todo._id}`,
-        updatedTodo
-      );
-      setTodos((todos) =>
-        todos.map((t) => (t._id === todo._id ? response.data : t))
-      );
-    } catch (error) {
-      console.error("Error updating todo:", error);
-    }
+    const updatedTodo = { ...todo, completed: !todo.completed };
+    return updatedTodoMutation(updatedTodo);
   };
 
   return (

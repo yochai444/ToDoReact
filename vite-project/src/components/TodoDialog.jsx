@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { useAtom, useSetAtom, atom } from "jotai";
-import { todosAtom, dialogOpenAtom, CurrentTodo } from "./atoms";
+import React, { useEffect } from "react";
+import { useAtom } from "jotai";
+import { dialogOpenAtom, CurrentTodo } from "./atoms";
 import { useForm, Controller } from "react-hook-form";
 import {
   Dialog,
@@ -11,14 +11,17 @@ import {
   Button,
   MenuItem,
 } from "@mui/material";
+import { useMutation, useQueryClient } from "react-query";
 import axios from "axios";
+import { useAddTodoMutation } from "../hooks/todos";
 
 const subjects = ["Work", "Personal", "School", "Other"];
 
 const TodoDialog = () => {
-  const [todos, setTodos] = useAtom(todosAtom);
   const [open, setOpen] = useAtom(dialogOpenAtom);
   const [currentTodo, setCurrentTodo] = useAtom(CurrentTodo);
+  const queryClient = useQueryClient();
+
   const {
     control,
     handleSubmit,
@@ -41,34 +44,30 @@ const TodoDialog = () => {
     }
   }, [currentTodo, reset]);
 
-  const onSubmit = async (data) => {
+  const { mutate: addTodoMutation } = useAddTodoMutation();
+
+  const updateMutation = useMutation(
+    (updatedTodo) =>
+      axios.put(
+        `http://localhost:8000/api/todos/${updatedTodo._id}`,
+        updatedTodo
+      ),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries("todos");
+        setOpen(false);
+        reset();
+      },
+    }
+  );
+
+  const onSubmit = (data) => {
     if (currentTodo) {
-      try {
-        const response = await axios.put(
-          `http://localhost:8000/api/todos/${currentTodo._id}`,
-          data
-        );
-        setTodos((todos) =>
-          todos.map((todo) =>
-            todo._id === currentTodo._id ? response.data : todo
-          )
-        );
-      } catch (error) {
-        console.error("Error updating todo:", error);
-      }
+      updateMutation.mutate({ ...currentTodo, ...data });
     } else {
-      try {
-        const response = await axios.post(
-          "http://localhost:8000/api/todos",
-          data
-        );
-        setTodos((todos) => [...todos, response.data]);
-      } catch (error) {
-        console.error("Error creating todo:", error);
-      }
+      addTodoMutation(data);
     }
     setOpen(false);
-    reset();
   };
 
   return (
@@ -147,8 +146,8 @@ const TodoDialog = () => {
                 variant="outlined"
                 fullWidth
                 margin="normal"
-                error={!!errors.subject}
-                helperText={errors.subject ? errors.subject.message : ""}
+                error={!!errors.date}
+                helperText={errors.date ? errors.date.message : ""}
                 InputLabelProps={{ shrink: true }}
               />
             )}

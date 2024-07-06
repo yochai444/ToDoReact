@@ -3,7 +3,13 @@ import {
   updateTodoSchema,
 } from "../validations/validationTodos.js";
 import { validateMiddleware } from "../validations/postValidation.js";
-import { getDb } from "../db.js";
+import {
+  getDb,
+  addToCollection,
+  findDocument,
+  updateDocument,
+  deleteDocument,
+} from "../db.js";
 import express from "express";
 import { ObjectId } from "mongodb";
 
@@ -20,10 +26,8 @@ router.post("/", validateMiddleware(todoSchema), async (req, res) => {
   try {
     const db = getDb();
 
-    const result = await db.collection("todos").insertOne(todo);
-    const doc = await db
-      .collection("todos")
-      .findOne({ _id: result.insertedId });
+    const result = addToCollection("todos", todo);
+    const doc = findDocument("todos", { _id: result.insertedId });
     res.status(200).json(doc);
   } catch (err) {
     console.error("Error creating todos:", err.message);
@@ -46,13 +50,8 @@ router.put("/:id", validateMiddleware(updateTodoSchema), async (req, res) => {
   try {
     const db = getDb();
 
-    const result = await db
-      .collection("todos")
-      .updateOne({ _id: new ObjectId(id) }, updatedTodo);
+    const result = updateDocument("todos", id, updatedTodo);
 
-    //if (result.matchedCount === 0) {
-    //throw new Error("todos not found");
-    //}
     res.json({ _id: id, ...req.body });
   } catch (err) {
     console.error("Error updating todos:", err.message);
@@ -77,12 +76,8 @@ router.delete("/:id", async (req, res) => {
   try {
     const db = getDb();
 
-    const result = await db
-      .collection("todos")
-      .deleteOne({ _id: new ObjectId(id) });
-    //if (result.deletedCount === 0) {
-    //return res.status(404).json({ message: "Todo not found" });
-    //}
+    const result = deleteDocument("todos", id);
+
     res.json({ message: "Deleted Todo" });
   } catch (err) {
     res.status(500).json({ message: err.message });
